@@ -1,2 +1,7 @@
 Package: twitter_crawler
 Version: 0.1
+Date: 2021-02-01
+Title: Twitter Crawler
+Description: Collect network data via Twitter's Search API v1
+Author: Andrew Carr <carr.andrewjohn@gmail.com>
+Maintainer: Andrew Carr <carr.andrewjohn@gmail.com>

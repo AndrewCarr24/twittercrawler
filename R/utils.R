@@ -24,6 +24,9 @@ id_to_id_object <- function(id, cursor_str = "-1", friends = TRUE, id_lst = NULL
   
   id_lst[[length(id_lst)+1]] <- id_object
   
+  # Deals with protected accounts
+  if(is.null(cursor_str)) return("")
+  
   if(cursor_str == "0"){
     return(id_lst %>% unlist)
   }else{
@@ -32,37 +35,37 @@ id_to_id_object <- function(id, cursor_str = "-1", friends = TRUE, id_lst = NULL
   
 }
 
+
+
 # Wrapper for httr's GET function that can handle Twitter rate limiting 
 rt_lim_GET <- function(url_string, token){
   
   data <- tryCatch({GET(url_string, token)}, error = function(e){
     message(e)
+    print("Retrying in 10 seconds.")
     Sys.sleep(10)
-    rt_lim_GET(url_string, token)
+    return(rt_lim_GET(url_string, token))
   })
   
-  if(data$status_code != 429 & data$status_code != 401){
+  if(data$status_code == 429){
     
-    return(data)
+    wait_func(data)
+    Sys.sleep(5)
+    return(rt_lim_GET(url_string, token))
     
   }else{
     
-    if(data$status_code == 429){
-      wait_func(data)
-    }
-    
     if(data$status_code == 401){
-      print("there was a 401 error")
-      return(data)
+      print("401 error.")  
     }
     
-    Sys.sleep(5)
-    
-    rt_lim_GET(url_string, token)
+    # Returns response for 200 or 401 status
+    return(data)
     
   }
   
 }
+
 
 # Wait function for exceeding API usage limits
 wait_func <- function(user_objects_data){
@@ -75,12 +78,13 @@ wait_func <- function(user_objects_data){
                'Waiting ', wait_time, ' minutes.'))
   Sys.sleep(60*wait_time)
   
-} 
+}
+
 
 # Takes vector of ids / Returns vectors of comma-separated 'chunks' of ids -- each element has <=100 ids 
 chunk_ids <- function(ids_vec){
   
-  if(length(ids_vec)>=100){
+  if(length(ids_vec) > 100){
     
     starts <- seq(1, length(ids_vec), 100)
     ends <- c(starts[2:length(starts)]-1, length(ids_vec))
@@ -95,9 +99,11 @@ chunk_ids <- function(ids_vec){
 }
 
 
-
 # Takes id_object // id, screenname, # friends, # followers, description, picture, location 
-get_user_data <- function(id_object, cursor_str = "-1", filter_col = NULL, filter_val = NULL){
+get_user_data <- function(id_object, cursor_str = "-1", filter_col = NULL, filter_val = NULL, degree = NULL, greater = greater){
+  
+  # Users with no connections return NULL
+  if(id_object[1] == ""){ return(NULL) }
   
   map(id_object, function(ids){
     
@@ -105,15 +111,15 @@ get_user_data <- function(id_object, cursor_str = "-1", filter_col = NULL, filte
     
     api_data <- rt_lim_GET(url_string, token)
     
-    user_data_to_tbl(api_data, filter_col = filter_col, filter_val = filter_val)
+    user_data_to_tbl(api_data, filter_col = filter_col, filter_val = filter_val, greater = greater)
     
-  }) %>% do.call("rbind", .)
+  }) %>% do.call("rbind", .) %>% tibble::add_column(degree = degree)
   
 }
 
 
 # Takes user_data and returns tibble of relevant info
-user_data_to_tbl <- function(user_data, filter_col = NULL, filter_val = NULL){
+user_data_to_tbl <- function(user_data, filter_col = NULL, filter_val = NULL, greater = greater){
   
   tbl_fin <- map(content(user_data), function(user){
     
@@ -124,7 +130,7 @@ user_data_to_tbl <- function(user_data, filter_col = NULL, filter_val = NULL){
   
   if(!is.null(filter_col) & !is.null(filter_val)){
     
-    return( tbl_fin %>% filter(grepl(tolower(filter_val), tolower(!!rlang::sym(filter_col)))) )
+    return( filter_apply(tbl_fin, filter_val, filter_col, greater = greater) )
     
   }else{
     
@@ -151,4 +157,26 @@ degree_stringify <- function(deg){
 }
 
 
+
+# Function that handles filter commands 
+filter_apply <- function(user_tbl, filter_val, filter_col, greater = TRUE){
+  
+  # Only include users whose description, name, location field contain some search term 
+  if(filter_col %in% c("description", "name", "location")){
+    
+    return(user_tbl %>% filter(grepl(tolower(filter_val), tolower(!!rlang::sym(filter_col)))))
+    
+  }else if(filter_col %in% c("friends", "followers")){
+    
+    filter_col <- paste0(filter_col, "_count")
+    
+    if(greater){
+      return(user_tbl %>% filter(!!rlang::sym(filter_col) >= filter_val))
+    }else{
+      return(user_tbl %>% filter(!!rlang::sym(filter_col) <= filter_val))
+    }
+    
+  }
+  
+} 
 

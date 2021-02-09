@@ -100,7 +100,7 @@ chunk_ids <- function(ids_vec){
 
 
 # Takes id_object // id, screenname, # friends, # followers, description, picture, location 
-get_user_data <- function(id_object, cursor_str = "-1", filter_col = NULL, filter_val = NULL, degree = NULL, greater = greater){
+get_user_data <- function(id_object, token = token, cursor_str = "-1", filter_col = NULL, filter_val = NULL, degree = NULL, greater = greater){
   
   # Users with no connections return NULL
   if(id_object[1] == ""){ return(NULL) }

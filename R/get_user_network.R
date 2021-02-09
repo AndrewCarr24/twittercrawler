@@ -1,4 +1,3 @@
-
 # Takes Twitter user id and a "degree" parm that indicates how many layers of the user's Twitter network to collect 
 # // Returns list of data on user's in network connections and an edgelist of user's network  
 get_user_network <- function(id = NULL, degree = 1, base_nodes_edges = NULL, layer_count = 0, collected_ids = NULL, 
@@ -14,7 +13,7 @@ get_user_network <- function(id = NULL, degree = 1, base_nodes_edges = NULL, lay
     id_object <- id_to_id_object(id, token = token)
     
     # Friend data tibble
-    user_data <- get_user_data(id_object, filter_col = filter_col, filter_val = filter_val, greater = greater, degree = layer_count+1) 
+    user_data <- get_user_data(id_object, token = token, filter_col = filter_col, filter_val = filter_val, greater = greater, degree = layer_count+1) 
     
     # User-friends edgelist (if user has connections)
     user_edgelist <- if(!is.null(user_data)){ tibble(from = id, to = user_data$id) }

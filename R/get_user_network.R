@@ -20,7 +20,7 @@ get_user_network <- function(id = NULL, degree = 1, base_nodes_edges = NULL, lay
     
     # Adding focal user to beginning of user_data (only for first iteration)
     if(layer_count == 0){
-      user_data <- bind_rows(get_user_data(id, degree = 0), user_data)
+      user_data <- bind_rows(get_user_data(id, token = token, degree = 0), user_data)
     }
     
     # Adding to existing network (if one exists)
@@ -51,6 +51,7 @@ get_user_network <- function(id = NULL, degree = 1, base_nodes_edges = NULL, lay
       if(layer_count < degree){
         ext_ids <- c(id, collected_ids)
         steps <- nrow(user_data %>% filter(!id %in% ext_ids) %>% filter(!duplicated(screen_name)))
+        con_str <- if(steps != 1){"connections"}else{"connection"}
         print(paste0(steps, " remaining ", degree_stringify(layer_count+1), " degree ",  con_str, " to collect."))
       }
       

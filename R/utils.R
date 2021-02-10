@@ -122,7 +122,7 @@ get_user_data <- function(id_object, token = token, cursor_str = "-1", filter_co
 # Takes user_data and returns tibble of relevant info
 user_data_to_tbl <- function(user_data, filter_col = NULL, filter_val = NULL, greater = greater){
 
-  tbl_fin <- purrr::map(content(user_data), function(user){
+  tbl_fin <- purrr::map(httr::content(user_data), function(user){
 
     user %>% .[c("id_str", "screen_name", "name", "friends_count", "followers_count", "location", "description",
                  "url", "profile_image_url")] %>% purrr::modify_if(is.null, ~ NA) %>% as_tibble %>% rename(id = id_str)

@@ -84,9 +84,9 @@ get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress
 
       # Selecting user id for next iteration
       new_id <- if(!is.null(user_data)){
-        user_data %>% dplyr::filter(!id %in% collected_ids) %>% pull(id) %>% .[1]
+        user_data %>% dplyr::filter(!id %in% collected_ids) %>% dplyr::pull(id) %>% .[1]
       }else{
-        base_nodes_edges[[1]] %>% dplyr::filter(!id %in% collected_ids) %>% pull(id) %>% .[1]
+        base_nodes_edges[[1]] %>% dplyr::filter(!id %in% collected_ids) %>% dplyr::pull(id) %>% .[1]
       }
 
       # Adding to list of collected data

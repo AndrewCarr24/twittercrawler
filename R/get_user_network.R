@@ -14,6 +14,7 @@
 #' ex_token <- api_token # Returned from api_credentials_to_token function
 #' get_user_network(id = ex_id, degree = ex_degree, token = ex_token)
 #'@export
+#' @importFrom magrittr %>%
 get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress = TRUE, filter_col = NULL, filter_val = NULL, greater = TRUE,
                              base_nodes_edges = NULL, layer_count = 0, collected_ids = NULL, steps = 1){
 
@@ -30,17 +31,17 @@ get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress
     user_data <- get_user_data(id_object, token = token, filter_col = filter_col, filter_val = filter_val, greater = greater, degree = layer_count+1)
 
     # User-friends edgelist (if user has connections)
-    user_edgelist <- if(!is.null(user_data)){ tibble(from = id, to = user_data$id) }
+    user_edgelist <- if(!is.null(user_data)){ dplyr::tibble(from = id, to = user_data$id) }
 
     # Adding focal user to beginning of user_data (only for first iteration)
     if(layer_count == 0){
-      user_data <- bind_rows(get_user_data(id, token = token, degree = 0), user_data)
+      user_data <- dplyr::bind_rows(get_user_data(id, token = token, degree = 0), user_data)
     }
 
     # Adding to existing network (if one exists)
     if(!is.null(base_nodes_edges) & !is.null(user_data)){
-      user_data <- bind_rows(base_nodes_edges[[1]], user_data) %>% filter(!duplicated(screen_name))
-      user_edgelist <- bind_rows(base_nodes_edges[[2]], user_edgelist)
+      user_data <- dplyr::bind_rows(base_nodes_edges[[1]], user_data) %>% dplyr::filter(!duplicated(screen_name))
+      user_edgelist <- dplyr::bind_rows(base_nodes_edges[[2]], user_edgelist)
     }
 
     # Counter goes down when user data / edgelist added
@@ -64,7 +65,7 @@ get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress
       # Only reset steps if there are more layers to collect
       if(layer_count < degree){
         ext_ids <- c(id, collected_ids)
-        steps <- nrow(user_data %>% filter(!id %in% ext_ids) %>% filter(!duplicated(screen_name)))
+        steps <- nrow(user_data %>% dplyr::filter(!id %in% ext_ids) %>% dplyr::filter(!duplicated(screen_name)))
         con_str <- if(steps != 1){"connections"}else{"connection"}
         print(paste0(steps, " remaining ", degree_stringify(layer_count+1), " degree ",  con_str, " to collect."))
       }
@@ -83,9 +84,9 @@ get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress
 
       # Selecting user id for next iteration
       new_id <- if(!is.null(user_data)){
-        user_data %>% filter(!id %in% collected_ids) %>% pull(id) %>% .[1]
+        user_data %>% dplyr::filter(!id %in% collected_ids) %>% pull(id) %>% .[1]
       }else{
-        base_nodes_edges[[1]] %>% filter(!id %in% collected_ids) %>% pull(id) %>% .[1]
+        base_nodes_edges[[1]] %>% dplyr::filter(!id %in% collected_ids) %>% pull(id) %>% .[1]
       }
 
       # Adding to list of collected data

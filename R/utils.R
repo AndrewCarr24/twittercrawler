@@ -125,7 +125,7 @@ user_data_to_tbl <- function(user_data, filter_col = NULL, filter_val = NULL, gr
   tbl_fin <- purrr::map(httr::content(user_data), function(user){
 
     user %>% .[c("id_str", "screen_name", "name", "friends_count", "followers_count", "location", "description",
-                 "url", "profile_image_url")] %>% purrr::modify_if(is.null, ~ NA) %>% as_tibble %>% rename(id = id_str)
+                 "url", "profile_image_url")] %>% purrr::modify_if(is.null, ~ NA) %>% dplyr::as_tibble %>% dplyr::rename(id = id_str)
 
   }) %>% do.call("rbind", .)
 

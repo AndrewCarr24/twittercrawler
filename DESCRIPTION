@@ -1,7 +1,12 @@
 Package: twittercrawler
-Version: 0.1
-Date: 2021-02-01
-Title: Twitter Crawler
-Description: Collect network data via Twitter's Search API v1
-Author: Andrew Carr <carr.andrewjohn@gmail.com>
-Maintainer: Andrew Carr <carr.andrewjohn@gmail.com>
+Type: Package
+Title: What the Package Does (Title Case)
+Version: 0.1.0
+Author: Who wrote it
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1

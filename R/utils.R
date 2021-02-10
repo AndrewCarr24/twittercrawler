@@ -106,7 +106,7 @@ get_user_data <- function(id_object, token = token, cursor_str = "-1", filter_co
   # Users with no connections return NULL
   if(id_object[1] == ""){ return(NULL) }
 
-  map(id_object, function(ids){
+  purrr::map(id_object, function(ids){
 
     url_string <- paste0("https://api.twitter.com/1.1/users/lookup.json?user_id=", ids, "&tweet_mode=extended", "&cursor=", cursor_str)
 

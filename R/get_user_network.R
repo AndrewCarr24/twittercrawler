@@ -1,7 +1,21 @@
-# Takes Twitter user id and a "degree" parm that indicates how many layers of the user's Twitter network to collect 
-# // Returns list of data on user's in network connections and an edgelist of user's network  
-get_user_network <- function(id = NULL, degree = 1, base_nodes_edges = NULL, layer_count = 0, collected_ids = NULL, 
-                             steps = 1, token = NULL, track_progress = TRUE, filter_col = NULL, filter_val = NULL, greater = TRUE){
+# Takes Twitter user information and returns list of data on users in network connections and an edgelist of user's network  
+#' @param id Twitter user id.
+#' @param degree Number of degrees of user's friends/followers to collect.
+#' @param degree Number of "layers" of user's friends/followers to collect.
+#' @param token Twitter API token.
+#' @param track_progress Determines whether to print progress of data collection (optional).
+#' @param filter_col Name of column of user tibble to filter for Twitter user collection (optional).
+#; @param filter_val Value to filter on (optional).
+#; @param greater When filtering number of friends/followers, determines whether filter is ceiling or floor on number of users (optional).
+#' @return List with two elements: user tibble and edgelist tibble.
+#' @examples
+#' ex_id <- 778619636510326784 # Example Twitter user id
+#' ex_degree <- 2 # Collect user's friends and their friends' friends
+#' ex_token <- api_token # Returned from api_credentials_to_token function
+#' get_user_network(id = ex_id, degree = ex_degree, token = ex_token)                           
+#' @export
+get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress = TRUE, filter_col = NULL, filter_val = NULL, greater = TRUE,
+                             base_nodes_edges = NULL, layer_count = 0, collected_ids = NULL, steps = 1){
   
   tryCatch({
     

@@ -1,12 +1,11 @@
 Package: twittercrawler
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Collect network data via Twitter's API.
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Andrew Carr
+Maintainer: Andrew Carr <carr@andrewjohn@gmail.com>
+Description: The Twitter API is a valuable data source for researchers, but rate limiting and the narrow uses of the API endpoints make the collection of network data cumbersome.  This package facilitates the process of collecting network data (user data tibbles and edgelists) using the Twitter API. 
+License: MIT + File LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1

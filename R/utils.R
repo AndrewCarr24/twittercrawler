@@ -50,7 +50,7 @@ rt_lim_GET <- function(url_string, token){
 
   if(data$status_code == 429){
 
-    wait_func(data)
+    wait_func(data, token)
     Sys.sleep(5)
     return(rt_lim_GET(url_string, token))
 
@@ -69,7 +69,7 @@ rt_lim_GET <- function(url_string, token){
 
 
 # Wait function for exceeding API usage limits
-wait_func <- function(user_objects_data){
+wait_func <- function(user_objects_data, token){
 
   rl <- rtweet::rate_limit(token)
   reset_row <- rl %>% dplyr::filter(limit != remaining & remaining == 0) %>% dplyr::arrange(desc(reset)) %>% .[1,]
@@ -101,7 +101,8 @@ chunk_ids <- function(ids_vec){
 
 
 # Takes id_object // id, screenname, # friends, # followers, description, picture, location
-get_user_data <- function(id_object, token = token, cursor_str = "-1", filter_col = NULL, filter_val = NULL, degree = NULL, greater = greater){
+get_user_data <- function(id_object, token = token, cursor_str = "-1", filter_col = NULL, filter_val = NULL, filter_logic = NULL,
+                          degree = NULL, greater = greater){
 
   # Users with no connections return NULL
   if(id_object[1] == ""){ return(NULL) }
@@ -112,7 +113,7 @@ get_user_data <- function(id_object, token = token, cursor_str = "-1", filter_co
 
     api_data <- rt_lim_GET(url_string, token)
 
-    user_data_to_tbl(api_data, filter_col = filter_col, filter_val = filter_val, greater = greater)
+    user_data_to_tbl(api_data, filter_col = filter_col, filter_val = filter_val, filter_logic = filter_logic, greater = greater)
 
   }) %>% do.call("rbind", .) %>% tibble::add_column(degree = degree)
 
@@ -120,18 +121,21 @@ get_user_data <- function(id_object, token = token, cursor_str = "-1", filter_co
 
 
 # Takes user_data and returns tibble of relevant info
-user_data_to_tbl <- function(user_data, filter_col = NULL, filter_val = NULL, greater = greater){
+user_data_to_tbl <- function(user_data, filter_col = NULL, filter_val = NULL, filter_logic = NULL, greater = greater){
 
   tbl_fin <- purrr::map(httr::content(user_data), function(user){
 
     user %>% .[c("id_str", "screen_name", "name", "friends_count", "followers_count", "location", "description",
-                 "url", "profile_image_url")] %>% purrr::modify_if(is.null, ~ NA) %>% dplyr::as_tibble() %>% dplyr::rename(id = id_str)
+                 "url", "profile_image_url")] %>% purrr::modify_if(is.null, ~ NA) %>% dplyr::as_tibble() %>%
+      mutate_at(c("id_str", "screen_name", "name", "location", "description", "url", "profile_image_url"), as.character) %>%
+      mutate_at(c("friends_count", "followers_count"), as.integer) %>%
+      dplyr::rename(id = id_str)
 
   }) %>% do.call("rbind", .)
 
   if(!is.null(filter_col) & !is.null(filter_val)){
 
-    return( filter_apply(tbl_fin, filter_val, filter_col, greater = greater) )
+    return( filter_apply(tbl_fin, filter_col, filter_val, filter_logic, greater = greater) )
 
   }else{
 
@@ -160,22 +164,36 @@ degree_stringify <- function(deg){
 
 
 # Function that handles filter commands
-filter_apply <- function(user_tbl, filter_val, filter_col, greater = TRUE){
+filter_apply <- function(user_tbl, filter_col, filter_val, filter_logic, greater = TRUE){
 
-  # Only include users whose description, name, location field contain some search term
-  if(filter_col %in% c("description", "name", "location")){
+  tbl_results <- map2(filter_col, filter_val, function(col, val){
 
-    return(user_tbl %>% dplyr::filter(grepl(tolower(filter_val), tolower(!!rlang::sym(filter_col)))))
+    # Only include users whose description, name, location field contain some search term
+    if(col %in% c("description", "name", "location")){
 
-  }else if(filter_col %in% c("friends", "followers")){
+      return(user_tbl %>% dplyr::filter(grepl(tolower(val), tolower(!!rlang::sym(col)))))
 
-    filter_col <- paste0(filter_col, "_count")
+    }else if(col %in% c("friends", "followers")){
 
-    if(greater){
-      return(user_tbl %>% dplyr::filter(!!rlang::sym(filter_col) >= filter_val))
-    }else{
-      return(user_tbl %>% dplyr::filter(!!rlang::sym(filter_col) <= filter_val))
+      col <- paste0(col, "_count")
+
+      if(greater){
+        return(user_tbl %>% dplyr::filter(!!rlang::sym(col) >= val))
+      }else{
+        return(user_tbl %>% dplyr::filter(!!rlang::sym(col) <= val))
+      }
+
     }
+
+  })
+
+  if(filter_logic == "any"){
+
+    return( do.call("rbind", tbl_results) )
+
+  }else if(filter_logic == "all"){
+
+    return( Reduce(intersect, tbl_results) )
 
   }
 

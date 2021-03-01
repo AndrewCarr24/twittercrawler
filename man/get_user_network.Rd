@@ -11,6 +11,7 @@ get_user_network(
   track_progress = TRUE,
   filter_col = NULL,
   filter_val = NULL,
+  filter_logic = "any",
   greater = TRUE,
   base_nodes_edges = NULL,
   layer_count = 0,
@@ -36,8 +37,10 @@ List with two elements: user tibble and edgelist tibble.
 Takes Twitter user information and returns list of data on users in network connections and an edgelist of user's network.
 }
 \examples{
+\dontrun{
 ex_id <- 778619636510326784 # Example Twitter user id
 ex_degree <- 2 # Collect user's friends and their friends' friends
 ex_token <- api_token # Returned from api_credentials_to_token function
 get_user_network(id = ex_id, degree = ex_degree, token = ex_token)
+}
 }

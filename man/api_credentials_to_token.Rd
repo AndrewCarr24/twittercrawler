@@ -30,7 +30,8 @@ Twitter API token.
 Takes Twitter API credentials and returns API token.
 }
 \examples{
-ex_app_name = ####
+\dontrun{
+ex_app_name = "application_name"
 ex_consumer_key = ####
 ex_consumer_secret = ####
 ex_access_token = ####
@@ -38,4 +39,5 @@ ex_access_secret = ####
 api_credentials_to_token(app_name = ex_app_name, consumer_key = ex_consumer_key,
                          consumer_secret = ex_consumer_secret, access_token = ex_access_token,
                          access_secret = ex_access_secret)
+}
 }

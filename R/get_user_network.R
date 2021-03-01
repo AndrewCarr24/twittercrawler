@@ -9,76 +9,73 @@
 #; @param greater When filtering number of friends/followers, determines whether filter is ceiling or floor on number of users (optional).
 #' @return List with two elements: user tibble and edgelist tibble.
 #' @examples
+#' \dontrun{
 #' ex_id <- 778619636510326784 # Example Twitter user id
 #' ex_degree <- 2 # Collect user's friends and their friends' friends
 #' ex_token <- api_token # Returned from api_credentials_to_token function
 #' get_user_network(id = ex_id, degree = ex_degree, token = ex_token)
+#' }
 #'@export
 #' @importFrom magrittr %>%
-get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress = TRUE, filter_col = NULL, filter_val = NULL, greater = TRUE,
-                             base_nodes_edges = NULL, layer_count = 0, collected_ids = NULL, steps = 1){
+get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress = TRUE, filter_col = NULL, filter_val = NULL, filter_logic = "any",
+                              greater = TRUE, base_nodes_edges = NULL, layer_count = 0, collected_ids = NULL, steps = 1){
 
   tryCatch({
 
-    if(!grepl("^[0-9]+$", id)){stop("User ids can only contain numbers.")}
+    while(degree != 1 & steps != 0){
 
-    if(is.null(token)){ stop("A Twitter API token is needed.") }
+      if(!grepl("^[0-9]+$", id)){ stop("User ids can only contain numbers.") }
 
-    # Ids of friends
-    id_object <- id_to_id_object(id, token = token)
+      if(is.null(token)){ stop("A Twitter API token is needed.") }
 
-    # Friend data tibble
-    user_data <- get_user_data(id_object, token = token, filter_col = filter_col, filter_val = filter_val, greater = greater, degree = layer_count+1)
+      # Ids of friends
+      id_object <- id_to_id_object(id, token = token)
 
-    # User-friends edgelist (if user has connections)
-    user_edgelist <- if(!is.null(user_data)){ dplyr::tibble(from = id, to = user_data$id) }
+      # Friend data tibble
+      user_data <- get_user_data(id_object, token = token, filter_col = filter_col, filter_val = filter_val, filter_logic = filter_logic,
+                                 greater = greater, degree = layer_count+1)
 
-    # Adding focal user to beginning of user_data (only for first iteration)
-    if(layer_count == 0){
-      user_data <- dplyr::bind_rows(get_user_data(id, token = token, degree = 0), user_data)
-    }
+      # User-friends edgelist (if user has connections)
+      user_edgelist <- if(!is.null(user_data)){ dplyr::tibble(from = id, to = user_data$id) }
 
-    # Adding to existing network (if one exists)
-    if(!is.null(base_nodes_edges) & !is.null(user_data)){
-      user_data <- dplyr::bind_rows(base_nodes_edges[[1]], user_data) %>% dplyr::filter(!duplicated(screen_name))
-      user_edgelist <- dplyr::bind_rows(base_nodes_edges[[2]], user_edgelist)
-    }
+      # Adding focal user to beginning of user_data (only for first iteration)
+      if(layer_count == 0){
+        user_data <- dplyr::bind_rows(get_user_data(id, token = token, degree = 0), user_data)
+      }
 
-    # Counter goes down when user data / edgelist added
-    steps <- steps - 1
+      # Adding to existing network (if one exists)
+      if(!is.null(base_nodes_edges) & !is.null(user_data)){
+        user_data <- dplyr::bind_rows(base_nodes_edges[[1]], user_data) %>% dplyr::filter(!duplicated(screen_name))
+        user_edgelist <- dplyr::bind_rows(base_nodes_edges[[2]], user_edgelist)
+      }
 
-    if(track_progress & layer_count > 0){
-      con_str <- if(steps != 1){"connections"}else{"connection"}
-      print(paste0(steps, " remaining ", degree_stringify(layer_count+1), " degree ",  con_str, " to collect."))
-    }
+      # Counter goes down when user data / edgelist added
+      steps <- steps - 1
 
-    # layer_count goes up and steps reset when done with steps in a layer
-    if(steps == 0){
-
-      # Set marker to next degree
-      layer_count <- layer_count + 1
-
-      # Track Progress (if set to true)
-      degree_string <- degree_stringify(layer_count)
-      print(paste0("Finished collecting ", degree_string, " degree connections."))
-
-      # Only reset steps if there are more layers to collect
-      if(layer_count < degree){
-        ext_ids <- c(id, collected_ids)
-        steps <- nrow(user_data %>% dplyr::filter(!id %in% ext_ids) %>% dplyr::filter(!duplicated(screen_name)))
+      if(track_progress & layer_count > 0){
         con_str <- if(steps != 1){"connections"}else{"connection"}
         print(paste0(steps, " remaining ", degree_stringify(layer_count+1), " degree ",  con_str, " to collect."))
       }
 
-    }
+      # layer_count goes up and steps reset when done with steps in a layer
+      if(steps == 0){
 
-    # Return nodes if steps = 0 and layer_count = degree
-    if( degree == 1 | (layer_count == degree & steps == 0) ){
+        # Set marker to next degree
+        layer_count <- layer_count + 1
 
-      return(list(nodes = user_data, edges = user_edgelist))
+        # Track Progress (if set to true)
+        degree_string <- degree_stringify(layer_count)
+        print(paste0("Finished collecting ", degree_string, " degree connections."))
 
-      # Reruns function with new values otherwise
-    }else{
+        # Only reset steps if there are more layers to collect
+        if(layer_count < degree){
+          ext_ids <- c(id, collected_ids)
+          steps <- nrow(user_data %>% dplyr::filter(!id %in% ext_ids) %>% dplyr::filter(!duplicated(screen_name)))
+          con_str <- if(steps != 1){"connections"}else{"connection"}
+          print(paste0(steps, " remaining ", degree_stringify(layer_count+1), " degree ",  con_str, " to collect."))
+        }
+
+      }
 
       collected_ids <- c(collected_ids, id)
 
@@ -93,20 +90,20 @@ get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress
       base_nodes_edges <- if(!is.null(user_data)){ list(user_data, user_edgelist) }else{ base_nodes_edges }
 
       # Rerun function with values from this iteration as parameters
-      get_user_network(id = new_id, degree = degree, base_nodes_edges = base_nodes_edges,
-                       layer_count = layer_count, collected_ids = collected_ids, steps = steps,
-                       token = token, track_progress = track_progress, filter_col = filter_col, filter_val = filter_val, greater = greater)
+      id <- new_id
 
     }
 
+    return(list(nodes = user_data, edges = user_edgelist))
 
   }, error = function(e){
 
-    print(e)
+    print(paste0(e, ". Returning data that has already been collected."))
 
-    return(list(id = id, degree = degree, base_nodes_edges = base_nodes_edges, layer_count = layer_count, collected_ids = collected_ids,
-                steps = steps))
+    return(list(id = id, degree = degree, filter_col = filter_col, filter_val = filter_val, filter_logic = filter_logic, greater = greater,
+                base_nodes_edges = base_nodes_edges, layer_count = layer_count, collected_ids = collected_ids, steps = steps))
 
   })
+
 
 }

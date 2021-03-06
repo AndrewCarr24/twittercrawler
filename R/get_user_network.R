@@ -1,12 +1,13 @@
 #' Takes Twitter user information and returns list of data on users in network connections and an edgelist of user's network.
+#' @param screen_name Twitter user screen name.
 #' @param id Twitter user id.
 #' @param degree Number of degrees of user's friends/followers to collect.
-#' @param degree Number of "layers" of user's friends/followers to collect.
 #' @param token Twitter API token.
-#' @param track_progress Determines whether to print progress of data collection (optional).
 #' @param filter_col Name of column of user tibble to filter for Twitter user collection (optional).
-#; @param filter_val Value to filter on (optional).
-#; @param greater When filtering number of friends/followers, determines whether filter is ceiling or floor on number of users (optional).
+#' @param filter_val Value to filter on (optional).
+#' @param filter_logic For multiple filters, determines whether to filter based on "any" or "all" criteria (optional).
+#' @param greater When filtering number of friends/followers, determines whether filter is ceiling or floor on number of users (optional).
+#' @param ... Additional arguments used for recursive function call within function.
 #' @return List with two elements: user tibble and edgelist tibble.
 #' @examples
 #' \dontrun{
@@ -17,12 +18,26 @@
 #' }
 #'@export
 #' @importFrom magrittr %>%
-get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress = TRUE, filter_col = NULL, filter_val = NULL, filter_logic = "any",
-                              greater = TRUE, base_nodes_edges = NULL, layer_count = 0, collected_ids = NULL, steps = 1){
+get_user_network <- function(screen_name = NULL, id = NULL, degree = 1, token = NULL,
+                             filter_col = NULL, filter_val = NULL, filter_logic = "any", greater = TRUE, ...){
+
+  # Converting screen_name to id (if screen name is provided and id is not)
+  if(is.null(id)){
+    url_string <- paste0("https://api.twitter.com/1.1/users/show.json?screen_name=", screen_name)
+    api_data <- rt_lim_GET(url_string, api_token)
+    id <- content(api_data)$id_str
+  }
+
+  if(!exists("base_nodes_edges")){
+    base_nodes_edges <- NULL
+    layer_count <- 0
+    collected_ids <- NULL
+    steps <- 1
+    }
 
   tryCatch({
 
-    while(degree != 1 & steps != 0){
+    while(steps != 0){
 
       if(!grepl("^[0-9]+$", id)){ stop("User ids can only contain numbers.") }
 
@@ -32,8 +47,8 @@ get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress
       id_object <- id_to_id_object(id, token = token)
 
       # Friend data tibble
-      user_data <- get_user_data(id_object, token = token, filter_col = filter_col, filter_val = filter_val, filter_logic = filter_logic,
-                                 greater = greater, degree = layer_count+1)
+      user_data <- get_user_data(id_object, degree = layer_count+1, token = token,
+                                 filter_col = filter_col, filter_val = filter_val, filter_logic = filter_logic, greater = greater)
 
       # User-friends edgelist (if user has connections)
       user_edgelist <- if(!is.null(user_data)){ dplyr::tibble(from = id, to = user_data$id) }
@@ -52,7 +67,7 @@ get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress
       # Counter goes down when user data / edgelist added
       steps <- steps - 1
 
-      if(track_progress & layer_count > 0){
+      if(layer_count > 0){
         con_str <- if(steps != 1){"connections"}else{"connection"}
         print(paste0(steps, " remaining ", degree_stringify(layer_count+1), " degree ",  con_str, " to collect."))
       }
@@ -63,7 +78,7 @@ get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress
         # Set marker to next degree
         layer_count <- layer_count + 1
 
-        # Track Progress (if set to true)
+        # Track Progress
         degree_string <- degree_stringify(layer_count)
         print(paste0("Finished collecting ", degree_string, " degree connections."))
 
@@ -77,6 +92,7 @@ get_user_network <- function(id = NULL, degree = 1, token = NULL, track_progress
 
       }
 
+      # Adding to vector of collected ids
       collected_ids <- c(collected_ids, id)
 
       # Selecting user id for next iteration

@@ -2,4 +2,7 @@
 
 export(api_credentials_to_token)
 export(get_user_network)
+import(dplyr)
+import(httr)
+import(purrr)
 importFrom(magrittr,"%>%")

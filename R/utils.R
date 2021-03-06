@@ -1,6 +1,10 @@
 #' @importFrom magrittr %>%
-#'
+#' @import httr
+#' @import dplyr
+#' @import purrr
 ## Utility functions for get_user_network -
+
+globalVariables(c("id_str", "api_token", "filter_values", "."))
 
 # Takes id // Returns ids object (ids of friends)
 id_to_id_object <- function(id, cursor_str = "-1", friends = TRUE, id_lst = NULL, token = NULL){
@@ -26,7 +30,9 @@ id_to_id_object <- function(id, cursor_str = "-1", friends = TRUE, id_lst = NULL
   id_lst[[length(id_lst)+1]] <- id_object
 
   # Deals with protected accounts
-  if(is.null(cursor_str)) return("")
+  if(is.null(cursor_str)){
+    return("")
+  }
 
   if(cursor_str == "0"){
     return(id_lst %>% unlist)
@@ -38,7 +44,7 @@ id_to_id_object <- function(id, cursor_str = "-1", friends = TRUE, id_lst = NULL
 
 
 
-# Wrapper for httr's GET function that can handle Twitter rate limiting
+# Wrapper for httr's GET function that handles Twitter rate limiting
 rt_lim_GET <- function(url_string, token){
 
   data <- tryCatch({httr::GET(url_string, token)}, error = function(e){
@@ -71,16 +77,28 @@ rt_lim_GET <- function(url_string, token){
 # Wait function for exceeding API usage limits
 wait_func <- function(user_objects_data, token){
 
-  rl <- rtweet::rate_limit(token)
-  reset_row <- rl %>% dplyr::filter(limit != remaining & remaining == 0) %>% dplyr::arrange(desc(reset)) %>% .[1,]
-  remaining <- reset_row$remaining
-  wait_time <- ceiling(as.numeric(reset_row$reset))
-  print(paste0('There are ', remaining, paste0(' uses of the ', reset_row$query, ' endpoint remaining in the current time window. '),
-               'Waiting ', wait_time, ' minutes.'))
+  rl_output <- GET("https://api.twitter.com/1.1/application/rate_limit_status.json?", api_token)
+  wait_time <- content(rl_output)$resources$friends$`/friends/ids`$reset
+  wait_time <- round(as.numeric(difftime(.POSIXct(wait_time), Sys.time(), units = "mins")), 2)
+
+  wait_time_str <- wait_time_to_str(wait_time)
+
+  print(paste0('There are 0 uses of the friends ids endpoint remaining in the current time window. Waiting about ', wait_time_str, '.'))
   Sys.sleep(60*wait_time)
 
 }
 
+# Helper - takes wait time and returns string with minutes and seconds
+wait_time_to_str <- function(wait_time){
+
+  min <- floor(wait_time)
+  secs <- round((wait_time - min)*60)
+  if(min == 1){min_word <- "minute"}else{min_word <- "minutes"}
+  if(secs == 1){sec_word <- "second"}else{sec_word <- "seconds"}
+
+  return(paste0(min, " ", min_word, " and ", secs, " ", sec_word))
+
+}
 
 # Takes vector of ids / Returns vectors of comma-separated 'chunks' of ids -- each element has <=100 ids
 chunk_ids <- function(ids_vec){
@@ -165,6 +183,10 @@ degree_stringify <- function(deg){
 
 # Function that handles filter commands
 filter_apply <- function(user_tbl, filter_col, filter_val, filter_logic, greater = TRUE){
+
+  if(length(filter_col) == 1){
+    filter_col <- as.list(rep(list(filter_col), length(filter_values)))
+  }
 
   tbl_results <- map2(filter_col, filter_val, function(col, val){
 

@@ -5,30 +5,35 @@
 \title{Takes Twitter user information and returns list of data on users in network connections and an edgelist of user's network.}
 \usage{
 get_user_network(
+  screen_name = NULL,
   id = NULL,
   degree = 1,
   token = NULL,
-  track_progress = TRUE,
   filter_col = NULL,
   filter_val = NULL,
   filter_logic = "any",
   greater = TRUE,
-  base_nodes_edges = NULL,
-  layer_count = 0,
-  collected_ids = NULL,
-  steps = 1
+  ...
 )
 }
 \arguments{
+\item{screen_name}{Twitter user screen name.}
+
 \item{id}{Twitter user id.}
 
-\item{degree}{Number of "layers" of user's friends/followers to collect.}
+\item{degree}{Number of degrees of user's friends/followers to collect.}
 
 \item{token}{Twitter API token.}
 
-\item{track_progress}{Determines whether to print progress of data collection (optional).}
-
 \item{filter_col}{Name of column of user tibble to filter for Twitter user collection (optional).}
+
+\item{filter_val}{Value to filter on (optional).}
+
+\item{filter_logic}{For multiple filters, determines whether to filter based on "any" or "all" criteria (optional).}
+
+\item{greater}{When filtering number of friends/followers, determines whether filter is ceiling or floor on number of users (optional).}
+
+\item{...}{Additional arguments used for recursive function call within function.}
 }
 \value{
 List with two elements: user tibble and edgelist tibble.

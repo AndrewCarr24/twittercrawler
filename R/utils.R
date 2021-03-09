@@ -4,7 +4,7 @@
 #' @import purrr
 ## Utility functions for get_user_network -
 
-globalVariables(c("id_str", "api_token", "filter_values", "."))
+globalVariables(c("id_str", "api_token", "filter_val", "."))
 
 # Takes id // Returns ids object (ids of friends)
 id_to_id_object <- function(id, cursor_str = "-1", friends = TRUE, id_lst = NULL, token = NULL){
@@ -185,7 +185,7 @@ degree_stringify <- function(deg){
 filter_apply <- function(user_tbl, filter_col, filter_val, filter_logic, greater = TRUE){
 
   if(length(filter_col) == 1){
-    filter_col <- as.list(rep(list(filter_col), length(filter_values)))
+    filter_col <- as.list(rep(list(filter_col), length(filter_val)))
   }
 
   tbl_results <- map2(filter_col, filter_val, function(col, val){

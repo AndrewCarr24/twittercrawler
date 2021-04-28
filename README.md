@@ -50,7 +50,7 @@ user_content
 ## # … with 120,084 more rows
 ```
 
-<img src='man/figures/net2_widget.png' align="center" height="139" />
+<img src='man/figures/net2_widget.png' align="center" height="600" />
 
-For information on additional features of the twittercrawler package and some examples of the kinds of data you can collect with twittercrawler, check out this blog post on my [website](https://andrewcarr24.github.io/post/twittercrawler/twittercrawler_site.html).s
+For information on additional features of the twittercrawler package and some examples of the kinds of data you can collect with twittercrawler, check out this blog post on my [website](https://andrewcarr24.github.io/post/twittercrawler/twittercrawler_site.html).
 

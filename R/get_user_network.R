@@ -1,6 +1,6 @@
 #' Get Twitter user network data
 #'
-#' `get_user_network()` takes a Twitter profile name or id number and returns data on this user's network connections, including an edgelist of the user's network.
+#' get_user_network() takes a Twitter profile name or id number and returns data on this user's network connections, including an edgelist of the user's network.
 #' @param screen_name Twitter user screen name.
 #' @param id Twitter user id.
 #' @param degree Number of degrees of user's friends/followers to collect.
@@ -13,10 +13,11 @@
 #' @return List with two elements: user tibble and edgelist tibble.
 #' @examples
 #' \dontrun{
-#' ex_id <- 778619636510326784 # Example Twitter user id
-#' ex_degree <- 2 # Collect user's friends and their friends' friends
-#' ex_token <- api_token # Returned from api_credentials_to_token function
-#' get_user_network(id = ex_id, degree = ex_degree, token = ex_token)
+#'
+#' # Collect all connections 2 degrees from Twitter user Andrew_Carr24
+#' # ex_token is the api token returned from api_credentials_to_token.
+#'
+#' get_user_network(screen_name = "Andrew_Carr24", degree = 2, token = ex_token)
 #' }
 #'@export
 #' @importFrom magrittr %>%

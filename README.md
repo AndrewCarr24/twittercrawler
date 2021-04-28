@@ -50,7 +50,25 @@ user_content
 ## # … with 120,084 more rows
 ```
 
+You can also use twittercrawler to collect subsets of a Twitter network based on user profile information. For instance, say you want to find all social science PhD students within four degrees of a Twitter user. You can choose to only collect users that have "phd student" or "phd candidate", along with the name of a social science discipline, somewhere in the description field of their Twitter profile. The filter_col argument takes the profile attribute (in this case, description) you want to filter on, and the filter_val argument takes the filter value. 
+
+```{r}
+# Making vector of social science disciplines 
+ss_disciplines <- c("sociology|sociology", "economics|economics", "anthropology|anthropology", "political science|political science", "psychology|psychology")
+
+ss_disciplines <- paste0("phd (student|candidate).*", ss_disciplines, ".*phd (student|candidate)")
+
+# Final regex - description must have discipline following or followed by "phd student" or "phd candidate"
+ss_disciplines_str <- paste0("(", paste(ss_disciplines, collapse = "|"), ")")
+
+# Getting network of Social science PhD students
+user_content <- get_user_network(screen_name = "Andrew_Carr24", degree = 4, token = api_token, 
+                                 filter_col = "description", filter_val = ss_disciplines_str)
+```
+
+This data can be used to visualize the network structure of social science PhD students on Twitter.
+
 <img src='man/figures/net2_widget.png' align="center" height="600" />
 
-For information on additional features of the twittercrawler package and some examples of the kinds of data you can collect with twittercrawler, check out this blog post on my [website](https://andrewcarr24.github.io/post/twittercrawler/twittercrawler_site.html).
+For information on additional features of the twittercrawler package and some examples of the kinds of data you can collect with twittercrawler, check out the blog post on my [website](https://andrewcarr24.github.io/post/twittercrawler/twittercrawler_site.html).
 

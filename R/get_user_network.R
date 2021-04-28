@@ -1,4 +1,6 @@
-#' Takes Twitter user information and returns list of data on users in network connections and an edgelist of user's network.
+#' Get Twitter user network data
+#'
+#' `get_user_network()` takes a Twitter profile name or id number and returns data on this user's network connections, including an edgelist of the user's network.
 #' @param screen_name Twitter user screen name.
 #' @param id Twitter user id.
 #' @param degree Number of degrees of user's friends/followers to collect.

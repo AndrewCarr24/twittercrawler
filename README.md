@@ -49,3 +49,6 @@ user_content
 ## 10 778619636510326784 749397927462703105
 ## # … with 120,084 more rows
 ```
+
+For information on additional features of the twittercrawler package and some examples of the kinds of data you can collect with twittercrawler, check out this blog post on my [website](https://andrewcarr24.github.io/post/twittercrawler/twittercrawler_site.html).
+

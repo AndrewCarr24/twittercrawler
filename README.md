@@ -70,5 +70,5 @@ This data can be used to visualize the network structure of social science PhD s
 
 <img src='man/figures/net2_widget.png' align="center" height="600" />
 
-For information on additional features of the twittercrawler package and some examples of the kinds of data you can collect with twittercrawler, check out the blog post on my [website](https://andrewcarr24.github.io/post/twittercrawler/twittercrawler_site.html).
+For information on additional features of the twittercrawler package and some examples of the kinds of data you can collect with twittercrawler, check out the blog post on my [website](https://andrewcarr24.github.io/post/twittercrawler/index.html).
 
